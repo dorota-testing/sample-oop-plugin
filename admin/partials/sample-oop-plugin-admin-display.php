@@ -14,11 +14,11 @@
 ?>
 
 <!-- This file should primarily consist of HTML with a little bit of PHP. -->
-<!-- *** NOT IN USE HERE!!! *** -->
+<!-- *** NOT IN USE HERE!!! FIELDS' NAMES  *** -->
 <form action="options.php" method="post">
 	<?php 
-	settings_fields( 'my_main_settings' ); // this will be used to save fields in the db?
-	do_settings_sections( 'my_main_settings' );
+	settings_fields( '??' ); // this will be used to save fields in the db?
+	do_settings_sections( '??' ); // get the proper name of the settings section (from function that registers them)
 	?>
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 

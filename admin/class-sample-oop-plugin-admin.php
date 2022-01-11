@@ -133,7 +133,7 @@ class Sample_Oop_Plugin_Admin {
 
 
 
-		/**
+	/**
 	 * Add a settings link under plugin name on the list of plugins
 	 * This is used by a hook in class-sample-oop-plugin.php
 	 *
@@ -145,4 +145,32 @@ class Sample_Oop_Plugin_Admin {
 		return $links;
 	}
 
+	/**
+	 * Return param multiplied by 2
+	 *
+	 * @param array $data Options for the function. Params are specified in function register_my_api_route()
+	 * @return string|null Result of multiplication, * or null if none.
+	 */
+	public function my_awesome_func( $data ) {
+		$number = $data['number'];
+		$result = $number * 2;
+	
+		if ( empty( $number) ) {
+			return null;
+		}
+		// Create the response object
+    $response = new WP_REST_Response( array('result'=>$result) );	
+		// Add a custom status code
+		$response->set_status(201);
+		return $response;
+	}
+
+	// the action for this is hooked in class-sample-oop-plugin.php
+	public function register_my_api_route() {
+		register_rest_route( 'soopp/v1', '/multiply/(?P<number>[\d+])', array(
+			'methods' => 'GET',
+			'callback' => [$this, 'my_awesome_func'],
+		) );
+	} 
+	
 }

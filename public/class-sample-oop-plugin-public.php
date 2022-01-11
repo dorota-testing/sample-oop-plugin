@@ -163,6 +163,38 @@ class Sample_Oop_Plugin_Public {
 		}
 	}
 
+
+	public function call_my_api_endpoint() {
+
+		
+		$url = 'http://dummy.restapiexample.com/api/v1/employee/'.$employee_id;
+		
+		$response = wp_remote_get( $url, array(
+			'timeout' => 120,
+			'httpversion' => '1.1',
+			)
+		);
+		
+		$body = wp_remote_retrieve_body($response);
+		//echo 'Response body:<pre>'; var_dump( $body ); echo '</pre>';
+		// if json requred, return here
+		if($return_json){
+			return $body;
+		}
+		$body = json_decode($body, true);
+		
+		if ( is_wp_error( $response ) ) {
+					$error_message = $response->get_error_message();
+					return "Something went wrong: $error_message";
+			} else {
+				//echo 'Response:<pre>'; print_r( $body ); echo '</pre>';
+				if(!is_null($body) && $body['status'] == 'success'){
+					return $body['data'];
+				}
+				return "API is not responding. Try refreshing the page.";
+			}
+	
+	}
 	/**
 	 * Sample of POST call to api
 	 */

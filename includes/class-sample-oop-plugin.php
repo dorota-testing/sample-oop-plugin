@@ -185,6 +185,11 @@ class Sample_Oop_Plugin {
 		// first param is shortcode name, last shortcode function
 		$this->loader->add_shortcode( 'soopp-options', $plugin_public, 'show_soopp_options' );
 
+		// this uses function 'custom_excerpt_more' form class-sample-oop-plugin-public.php
+		$this->loader->add_filter( 'excerpt_more', $plugin_public, 'custom_excerpt_more' );
+
+		$this->loader->add_action( 'wp_footer', $plugin_public, 'add_copyright_to_footer' );
+
 	}
 
 	/**

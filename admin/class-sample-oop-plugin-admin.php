@@ -188,7 +188,7 @@ class Sample_Oop_Plugin_Admin {
 	 * @return string Result of multiplication, or error.
 	 */
 	public function return_string_funct( $data ) {
-		var_dump($data);
+		//var_dump($data);
 		$string = $data['string'];
 	
 		if ( empty( $string) ) {

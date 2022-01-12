@@ -100,6 +100,22 @@ class Sample_Oop_Plugin_Public {
 
 	}
 
+	// this is used by filter
+	public function custom_excerpt_more( $more ) {
+    return '...';
+	}
+	// this is used by hook wp_footer
+	public function add_copyright_to_footer( $more ) {
+		$strHtml = '<footer>';  
+		$strHtml .= '<div class="footer-bottom">';
+    $strHtml .= '<div class="container">';
+		$strHtml .= '<br><p>Copyright notice set with wp_footer hook.</p>';
+    $strHtml .= '</div>';
+		$strHtml .= '</div>';
+		$strHtml .= '</footer>';
+		echo $strHtml;
+	}
+
 	// sample shortcode function
 	public function show_soopp_options(){
 		$options = get_option( 'soopp_options' );
@@ -110,7 +126,13 @@ class Sample_Oop_Plugin_Public {
 		}
 		$str1 = '<p>'.$html.'</p><br><br>';
 
-		$arrEmp = $this->call_api(2);
+		// call api
+		$employee_id = 3;
+		$url = 'http://dummy.restapiexample.com/api/v1/employee/'.$employee_id;
+		$response = $this->call_api($url);
+
+		$arrEmp = $response['data'];
+		//$arrEmp = [];
 		//var_dump($options['soopp_dropdown']);
 		$str = '';
 		if(is_array($arrEmp)){
@@ -121,80 +143,60 @@ class Sample_Oop_Plugin_Public {
 		} else {
 			$str .= '<p>'.$arrEmp.'</p>';
 		}
-		return '<p>'.$str1.'</p>'.$str;
+
+		$nonce = wp_create_nonce( 'wp_rest' );
+		//this is supposed to send the nonce, but I don't know hoe to access it and verify where it gets the request
+		$headers = array ('X-WP-Nonce' => $nonce);
+		// call my api endpoint
+		$url2 = 'http://localhost/plants/wp-json/soopp/v1/lorem/aaa/';
+		$response2 = $this->call_api($url2, 'GET', '', $headers);
+		print_r($response2);
+		$arrBody = $response2['data'];
+		$str3 = '<br>My response = '.$arrBody['result'];
+		return '<p>'.$str1.'</p>'.$str.$str3;
 	}
+
 
 	/**
-	 * Sample GET call
-	 * @param string $employee_id - param to be used inthe call
+	 * Universal function for api calls
+	 * @param string $url - api url
+	 * @param string $method - Accepts 'GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'TRACE', 'OPTIONS', or 'PATCH'. Some transports technically allow others, but should not be assumed. Default 'GET'.
+	 * @param array $data_string - data to be sent in the body of POST. Depending on API it can be something like url params: 'email='.$email.'&properties='.$string.'&confirm_optin=false'; (Maybe sometimes json too?)
+	 * @param array $headers - request headers
 	 * @param bool  $return_json - defalt false. If set true will rturn json
-	 * @return array or json string depending on the last param
+	 * @return array or json string depending on the last param. Also error message?
 	 */
-	public function call_api($employee_id = 1, $return_json = false) {
+	public function call_api($url, $method = 'GET', $data_string = '', $headers = [], $return_json = false ) {
 
-		if($employee_id != ''){
-		
-		$url = 'http://dummy.restapiexample.com/api/v1/employee/'.$employee_id;
-		
-		$response = wp_remote_get( $url, array(
-			'timeout' => 120,
+		$response = wp_remote_request($url, $args = array(
+			'method' => $method,
+			'timeout' => 15,
+			'redirection' => 5,
 			'httpversion' => '1.1',
+			'blocking' => true,
+			'headers' => $headers,
+			'body' => $data_string,
+			'cookies' => array()
 			)
 		);
-		
-		$body = wp_remote_retrieve_body($response);
-		//echo 'Response body:<pre>'; var_dump( $body ); echo '</pre>';
-		// if json requred, return here
-		if($return_json){
-			return $body;
-		}
-		$body = json_decode($body, true);
-		
+
 		if ( is_wp_error( $response ) ) {
-					$error_message = $response->get_error_message();
-					return "Something went wrong: $error_message";
-			} else {
-				//echo 'Response:<pre>'; print_r( $body ); echo '</pre>';
-				if(!is_null($body) && $body['status'] == 'success'){
-					return $body['data'];
-				}
-				return "API is not responding. Try refreshing the page.";
+			$error_message = $response->get_error_message();
+			return "Something went wrong: $error_message";
+		} else {
+
+			$body = wp_remote_retrieve_body($response);
+			//echo 'Response body:<pre>'; var_dump( $body ); echo '</pre>';
+			// if json requred, return here
+			if($return_json){
+				return $body;
 			}
+			$body = json_decode($body, true);
+			//echo 'Response:<pre>'; print_r( $body ); echo '</pre>';
+			return $body;
 		}
 	}
 
-
-	public function call_my_api_endpoint() {
-
-		
-		$url = 'http://dummy.restapiexample.com/api/v1/employee/'.$employee_id;
-		
-		$response = wp_remote_get( $url, array(
-			'timeout' => 120,
-			'httpversion' => '1.1',
-			)
-		);
-		
-		$body = wp_remote_retrieve_body($response);
-		//echo 'Response body:<pre>'; var_dump( $body ); echo '</pre>';
-		// if json requred, return here
-		if($return_json){
-			return $body;
-		}
-		$body = json_decode($body, true);
-		
-		if ( is_wp_error( $response ) ) {
-					$error_message = $response->get_error_message();
-					return "Something went wrong: $error_message";
-			} else {
-				//echo 'Response:<pre>'; print_r( $body ); echo '</pre>';
-				if(!is_null($body) && $body['status'] == 'success'){
-					return $body['data'];
-				}
-				return "API is not responding. Try refreshing the page.";
-			}
-	
-	}
 	/**
 	 * Sample of POST call to api
 	 */
@@ -224,9 +226,9 @@ class Sample_Oop_Plugin_Public {
 		
 		$response = wp_remote_post( $url, array(
 			'method' => 'POST',
-			'timeout' => 45,
+			'timeout' => 15,
 			'redirection' => 5,
-			'httpversion' => '1.0',
+			'httpversion' => '1.1',
 			'blocking' => true,
 			'headers' => array(),
 			'body' => $data_string,
@@ -248,23 +250,6 @@ class Sample_Oop_Plugin_Public {
 				return $body['person']['id'];
 			}
 		}
-	}
-
-
-	// this is used by filter
-	public function custom_excerpt_more( $more ) {
-    return '...';
-	}
-	// this is used by hook wp_footer
-	public function add_copyright_to_footer( $more ) {
-		$strHtml = '<footer>';  
-		$strHtml .= '<div class="footer-bottom">';
-    $strHtml .= '<div class="container">';
-		$strHtml .= '<br><p>Copyright notice set with wp_footer hook.</p>';
-    $strHtml .= '</div>';
-		$strHtml .= '</div>';
-		$strHtml .= '</footer>';
-		echo $strHtml;
 	}
 
 }

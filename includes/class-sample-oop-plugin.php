@@ -168,6 +168,7 @@ class Sample_Oop_Plugin {
 		$this->loader->add_action( 'admin_init', $plugin_settings, 'soopp_settings_init' );
 
 		$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_my_api_route');
+		$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_my_second_api_route');
 	}
 
 	/**

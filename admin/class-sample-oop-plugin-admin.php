@@ -149,28 +149,90 @@ class Sample_Oop_Plugin_Admin {
 	 * Return param multiplied by 2
 	 *
 	 * @param array $data Options for the function. Params are specified in function register_my_api_route()
-	 * @return string|null Result of multiplication, * or null if none.
+	 * @return string Result of multiplication, or error.
 	 */
 	public function my_awesome_func( $data ) {
 		$number = $data['number'];
 		$result = $number * 2;
 	
 		if ( empty( $number) ) {
-			return null;
+			return new WP_Error( 'wrong_number', 'Number not valid', array( 'status' => 404 ) );
 		}
 		// Create the response object
-    $response = new WP_REST_Response( array('result'=>$result) );	
+		//$data =  array('result'=>$result);
+		$data = array(
+			'code' => 'my_awesome_func',
+			'message' => 'Success',
+			'data' => array('status'=> 201, 'result'=>$result)
+		);
+    $response = new WP_REST_Response($data);	
 		// Add a custom status code
 		$response->set_status(201);
+
 		return $response;
 	}
 
 	// the action for this is hooked in class-sample-oop-plugin.php
 	public function register_my_api_route() {
-		register_rest_route( 'soopp/v1', '/multiply/(?P<number>[\d+])', array(
+		// the thing after the <param> is regex validation [\w-]+ is word, [\d]+ is  number > 0 . This is first way to add of validation. Also validation callbacj can be used.
+		register_rest_route( 'soopp/v1', '/multiply/(?P<number>[\d]+)', array(
 			'methods' => 'GET',
 			'callback' => [$this, 'my_awesome_func'],
 		) );
 	} 
+
+	/**
+	 * Return string in the param
+	 *
+	 * @param array $data Options for the function. Params are specified in function register_my_api_route()
+	 * @return string Result of multiplication, or error.
+	 */
+	public function return_string_funct( $data ) {
+		var_dump($data);
+		$string = $data['string'];
 	
+		if ( empty( $string) ) {
+			return new WP_Error( 'wrong_string', 'String not valid', array( 'status' => 404 ) );
+		}
+		// Create the response object
+		$data = array(
+			'code' => 'return_string_funct',
+			'message' => 'Success',
+			'data' => array('status'=> 201,'result'=>$string)
+		);
+    $response = new WP_REST_Response($data);	
+		// Add a custom status code
+		$response->set_status(201);
+
+		return $response;
+	}
+
+	public function register_my_second_api_route() {
+		// the thing after the <param> is regex validation [\w-]+ is word, [\d]+ is  number > 0 . This is first way to add of validation. Also validation callbacj can be used.
+		register_rest_route( 'soopp/v1', '/lorem/(?P<string>[\w-]+)', array(
+			'methods' => 'GET',
+			'callback' => [$this, 'return_string_funct'],
+			'args' => array(
+				'string' => array(
+					'validate_callback' => [ $this, 'is_max_20_chars']
+				),
+			),
+			'permission_callback' => function () {
+				
+/*  				$nonce = $_REQUEST['_wpnonce'];
+				 var_dump($_REQUEST);
+				if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+					return false;
+				} */
+				return true;
+			} 
+
+		) );
+	}
+	public function is_max_20_chars ($string) {
+		if(strlen($string) > 20){
+			return false;
+		}
+		return true;
+	}
 }
